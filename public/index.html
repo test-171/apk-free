@@ -1,102 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>APK Free</title>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مركز تحميل الألعاب والتطبيقات</title>
     <style>
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #f4f7fb;
-        color: #1f2937;
-      }
-      .container {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 40px 20px;
-      }
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-      }
-      .header h1 {
-        margin: 0;
-        font-size: 2rem;
-      }
-      .badge {
-        background: #2563eb;
-        color: white;
-        padding: 8px 14px;
-        border-radius: 999px;
-        font-size: 0.85rem;
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-      }
-      .card {
-        background: white;
-        border-radius: 12px;
-        padding: 18px;
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-      }
-      .card h3 {
-        margin-top: 0;
-      }
-      .meta {
-        display: flex;
-        justify-content: space-between;
-        color: #475569;
-        font-size: 0.95rem;
-        margin-top: 10px;
-      }
-      .rating {
-        color: #f59e0b;
-        font-weight: bold;
-      }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding-bottom: 50px; }
+        header { background: #1e293b; padding: 2rem 1rem; text-align: center; border-bottom: 1px solid #334155; }
+        header h1 { color: #38bdf8; font-size: 2rem; margin-bottom: 8px; }
+        header p { color: #94a3b8; font-size: 0.95rem; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .search-box { width: 100%; padding: 14px 18px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: white; font-size: 1rem; margin-bottom: 30px; outline: none; transition: 0.2s; }
+        .search-box:focus { border-color: #38bdf8; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
+        .card { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; display: flex; flex-direction: column; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-4px); }
+        .card img { width: 100%; height: 170px; object-fit: cover; background: #0f172a; }
+        .card-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+        .badge { background: #0284c7; color: white; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: bold; width: fit-content; margin-bottom: 10px; }
+        .card-title { font-size: 1.15rem; color: #fff; margin-bottom: 8px; }
+        .card-desc { font-size: 0.88rem; color: #94a3b8; margin-bottom: 18px; flex: 1; line-height: 1.4; }
+        .download-btn { background: #d97706; color: white; text-decoration: none; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; transition: 0.2s; display: block; }
+        .download-btn:hover { background: #b45309; }
+        .loader { text-align: center; color: #94a3b8; font-size: 1.1rem; grid-column: 1/-1; padding: 40px; }
     </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>APK Free</h1>
-        <div class="badge">Games Collection</div>
-      </div>
+</head>
+<body>
 
-      <div id="games" class="grid"></div>
+<header>
+    <h1>مكتبة الألعاب والتطبيقات</h1>
+    <p>تحميل مباشر مجاناً بروابط عالية السرعة عبر سيرفرات MEGA</p>
+</header>
+
+<div class="container">
+    <input type="text" id="searchInput" class="search-box" placeholder="ابحث باسم اللعبة أو التطبيق...">
+    <div class="grid" id="gamesGrid">
+        <div class="loader">جاري تحميل المحتوى...</div>
     </div>
+</div>
 
-    <script>
-      async function loadGames() {
-        const res = await fetch('/api/games');
-        const games = await res.json();
-        const container = document.getElementById('games');
+<script>
+    let gamesData = [];
 
-        container.innerHTML = games
-          .map(
-            (game) => `
-              <div class="card">
-                <h3>${game.title}</h3>
-                <div class="meta">
-                  <span>${game.category}</span>
-                  <span class="rating">★ ${game.rating}</span>
+    async function fetchGames() {
+        try {
+            const res = await fetch('/api/games');
+            gamesData = await res.json();
+            renderGames(gamesData);
+        } catch (e) {
+            document.getElementById('gamesGrid').innerHTML = '<div class="loader">حدث خطأ أثناء تحميل البيانات من السيرفر.</div>';
+        }
+    }
+
+    function renderGames(list) {
+        const grid = document.getElementById('gamesGrid');
+        if (!Array.isArray(list) || list.length === 0) {
+            grid.innerHTML = '<div class="loader">لا توجد ألعاب متوفرة حالياً.</div>';
+            return;
+        }
+
+        grid.innerHTML = list.map(item => `
+            <div class="card">
+                <img src="${item.image_url || 'https://via.placeholder.com/300x170?text=No+Image'}" alt="${item.title}">
+                <div class="card-body">
+                    <span class="badge">${item.category || 'عام'}</span>
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-desc">${item.description || 'لا يوجد وصف متاح لهذا العنصر.'}</p>
+                    <a href="${item.mega_url}" target="_blank" class="download-btn">تحميل عبر MEGA</a>
                 </div>
-                <div class="meta">
-                  <span>Price</span>
-                  <strong>${game.price === 0 ? 'Free' : `$${game.price}`}</strong>
-                </div>
-              </div>
-            `
-          )
-          .join('');
-      }
+            </div>
+        `).join('');
+    }
 
-      loadGames();
-    </script>
-  </body>
+    document.getElementById('searchInput').oninput = (e) => {
+        const val = e.target.value.toLowerCase();
+        const filtered = gamesData.filter(g => 
+            g.title.toLowerCase().includes(val) || 
+            (g.description && g.description.toLowerCase().includes(val))
+        );
+        renderGames(filtered);
+    };
+
+    fetchGames();
+</script>
+
+</body>
 </html>
