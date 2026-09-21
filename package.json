@@ -2,16 +2,9 @@
   "name": "apk-free",
   "version": "1.0.0",
   "private": true,
-  "description": "Simple games catalog and admin dashboard",
+  "type": "module",
   "main": "api/games.js",
-  "scripts": {
-    "start": "node api/games.js",
-    "dev": "nodemon api/games.js"
-  },
   "dependencies": {
-    "express": "^4.19.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.19"
+    "@supabase/supabase-js": "^2.39.0"
   }
 }
