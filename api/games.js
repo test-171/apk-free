@@ -1,56 +1,79 @@
-const express = require('express');
-const path = require('path');
+import { createClient } from '@supabase/supabase-js';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
-const games = [
-  { id: 1, title: 'Temple Run', category: 'Action', price: 0, rating: 4.6 },
-  { id: 2, title: 'Minecraft', category: 'Adventure', price: 0, rating: 4.8 },
-  { id: 3, title: 'Subway Surfers', category: 'Runner', price: 0, rating: 4.5 },
-  { id: 4, title: '2048', category: 'Puzzle', price: 0, rating: 4.3 }
-];
+export default async function handler(req, res) {
+  // إعدادات CORS للسماح بالطلبات
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
-
-app.get('/api/games', (req, res) => {
-  res.json(games);
-});
-
-app.get('/api/games/:id', (req, res) => {
-  const game = games.find((item) => item.id === Number(req.params.id));
-
-  if (!game) {
-    return res.status(404).json({ message: 'Game not found' });
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
 
-  return res.json(game);
-});
+  // 1. جلب الألعاب (متاح للجميع)
+  if (req.method === 'GET') {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .order('id', { ascending: false });
 
-app.post('/api/games', (req, res) => {
-  const { title, category, price, rating } = req.body;
-
-  if (!title || !category) {
-    return res.status(400).json({ message: 'Title and category are required' });
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json(data);
+    } catch (err) {
+      return res.status(500).json({ error: 'Server error fetching data' });
+    }
   }
 
-  const newGame = {
-    id: games.length ? games[games.length - 1].id + 1 : 1,
-    title,
-    category,
-    price: Number(price) || 0,
-    rating: Number(rating) || 0
-  };
+  // التحقق من كلمة سر الأدمن للعمليات المتقدمة
+  const adminPass = req.headers['authorization'];
+  if (adminPass !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'غير مصرح لك (كلمة السر خاطئة)' });
+  }
 
-  games.push(newGame);
-  return res.status(201).json(newGame);
-});
+  // 2. إضافة لعبة جديدة (للأدمن فقط)
+  if (req.method === 'POST') {
+    try {
+      const { title, category, description, image_url, mega_url } = req.body;
+      
+      if (!title || !mega_url) {
+        return res.status(400).json({ error: 'يرجى إدخال الاسم ورابط MEGA' });
+      }
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+      const { data, error } = await supabase
+        .from('games')
+        .insert([{ title, category, description, image_url, mega_url }])
+        .select();
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ success: true, data });
+    } catch (err) {
+      return res.status(500).json({ error: 'Server error inserting data' });
+    }
+  }
+
+  // 3. حذف لعبة (للأدمن فقط)
+  if (req.method === 'DELETE') {
+    try {
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ error: 'مُعرّف اللعبة مطلوب' });
+
+      const { error } = await supabase
+        .from('games')
+        .delete()
+        .eq('id', id);
+
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ error: 'Server error deleting data' });
+    }
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+}
