@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #111827;
+        color: #f9fafb;
+      }
+      .container {
+        max-width: 700px;
+        margin: 60px auto;
+        background: #1f2937;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+      }
+      h1 {
+        margin-top: 0;
+      }
+      form {
+        display: grid;
+        gap: 14px;
+      }
+      input, button {
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: none;
+      }
+      input {
+        background: #374151;
+        color: white;
+      }
+      button {
+        background: #10b981;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .message {
+        margin-top: 16px;
+        color: #a7f3d0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Admin Panel</h1>
+      <form id="gameForm">
+        <input type="text" id="title" placeholder="Game title" required />
+        <input type="text" id="category" placeholder="Category" required />
+        <input type="number" id="price" placeholder="Price" min="0" value="0" />
+        <input type="number" id="rating" placeholder="Rating" min="0" max="5" step="0.1" value="4.5" />
+        <button type="submit">Add Game</button>
+      </form>
+      <div id="message" class="message"></div>
+    </div>
+
+    <script>
+      const form = document.getElementById('gameForm');
+      const message = document.getElementById('message');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const payload = {
+          title: document.getElementById('title').value,
+          category: document.getElementById('category').value,
+          price: document.getElementById('price').value,
+          rating: document.getElementById('rating').value
+        };
+
+        const res = await fetch('/api/games', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          message.textContent = data.message || 'Failed to add game';
+          return;
+        }
+
+        message.textContent = `Game added: ${data.title}`;
+        form.reset();
+      });
+    </script>
+  </body>
+</html>

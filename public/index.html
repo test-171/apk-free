@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>APK Free</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f7fb;
+        color: #1f2937;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+      .badge {
+        background: #2563eb;
+        color: white;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      }
+      .card h3 {
+        margin-top: 0;
+      }
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        color: #475569;
+        font-size: 0.95rem;
+        margin-top: 10px;
+      }
+      .rating {
+        color: #f59e0b;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>APK Free</h1>
+        <div class="badge">Games Collection</div>
+      </div>
+
+      <div id="games" class="grid"></div>
+    </div>
+
+    <script>
+      async function loadGames() {
+        const res = await fetch('/api/games');
+        const games = await res.json();
+        const container = document.getElementById('games');
+
+        container.innerHTML = games
+          .map(
+            (game) => `
+              <div class="card">
+                <h3>${game.title}</h3>
+                <div class="meta">
+                  <span>${game.category}</span>
+                  <span class="rating">★ ${game.rating}</span>
+                </div>
+                <div class="meta">
+                  <span>Price</span>
+                  <strong>${game.price === 0 ? 'Free' : `$${game.price}`}</strong>
+                </div>
+              </div>
+            `
+          )
+          .join('');
+      }
+
+      loadGames();
+    </script>
+  </body>
+</html>
